@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>公众号文章转PDF</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 24px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            color: #666;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .input-hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: 6px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #d0d0d0;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        
+        .upload-area.has-file {
+            border-color: #07c160;
+            background: #f0fff5;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .upload-text {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .upload-hint {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            margin-top: 12px;
+            font-size: 15px;
+            padding: 12px;
+        }
+        
+        .progress {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .progress.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-text {
+            font-size: 15px;
+            color: #666;
+        }
+        
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fff5;
+            border-radius: 12px;
+            border: 1px solid #07c160;
+        }
+        
+        .result.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .result-text {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        
+        .btn-success {
+            background: #07c160;
+            color: white;
+        }
+        
+        .error {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #fff5f5;
+            border-radius: 12px;
+            border: 1px solid #ff4d4f;
+            color: #ff4d4f;
+            font-size: 14px;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        .warning {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background: #fffbe6;
+            border-radius: 12px;
+            border: 1px solid #ffc53d;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .warning.active {
+            display: block;
+        }
+        
+        .warning-title {
+            font-weight: 600;
+            color: #d48806;
+            margin-bottom: 8px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 16px 8px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .feature-text {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+        
+        .paste-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f0f0ff;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .paste-btn:hover {
+            background: #e0e0ff;
+        }
+        
+        .steps {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .steps-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .step-number {
+            width: 22px;
+            height: 22px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab {
+                font-size: 13px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 公众号文章转PDF</h1>
+            <p>将微信文章转换为精美的PDF文档</p>
+        </div>
+        
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('link')">🔗 链接抓取</button>
+                <button class="tab" onclick="switchTab('text')">📝 粘贴文字</button>
+                <button class="tab" onclick="switchTab('image')">📷 上传截图</button>
+            </div>
+            
+            <!-- 链接抓取 -->
+            <div id="link-tab" class="tab-content active">
+                <div class="steps">
+                    <div class="steps-title">📖 使用步骤</div>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">在微信中打开文章，点击右上角「···」</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">选择「复制链接」</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">粘贴到下方输入框，点击生成</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="article-link">文章链接 *</label>
+                    <input type="text" id="article-link" placeholder="https://mp.weixin.qq.com/s/...">
+                    <div class="input-hint">支持 mp.weixin.qq.com 链接</div>
+                </div>
+            </div>
+            
+            <!-- 文字输入 -->
+            <div id="text-tab" class="tab-content">
+                <div class="steps">
+                    <div class="steps-title">📖 使用步骤</div>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">在微信中打开文章，长按文字选择「复制」</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">或点击右上角「···」-「复制链接」在浏览器打开后复制文字</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">粘贴到下方，点击生成</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="title">文章标题（可选）</label>
+                    <input type="text" id="title" placeholder="输入文章标题">
+                </div>
+                <div class="form-group">
+                    <label for="content">文章内容 *</label>
+                    <button class="paste-btn" onclick="pasteContent()">📋 一键粘贴</button>
+                    <textarea id="content" placeholder="请粘贴微信公众号文章内容..."></textarea>
+                </div>
+            </div>
+            
+            <!-- 图片上传 -->
+            <div id="image-tab" class="tab-content">
+                <div class="steps">
+                    <div class="steps-title">📖 使用步骤</div>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">在微信中打开文章</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">截取文章长截图（可多次截图）</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">上传截图，自动识别文字</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="img-title">文章标题（可选）</label>
+                    <input type="text" id="img-title" placeholder="输入文章标题">
+                </div>
+                <div class="form-group">
+                    <label>上传长截图 *</label>
+                    <div class="upload-area" onclick="document.getElementById('image').click()">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-text">点击上传截图</div>
+                        <div class="upload-hint">支持 JPG、PNG 格式</div>
+                    </div>
+                    <input type="file" id="image" accept="image/*" onchange="handleImageSelect(event)">
+                    <img id="preview" class="preview-image" style="display: none;">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="submit-btn" onclick="generatePDF()">
+                ✨ 生成PDF文档
+            </button>
+            
+            <div class="progress" id="progress">
+                <div class="spinner"></div>
+                <div class="progress-text" id="progress-text">正在生成PDF...</div>
+            </div>
+            
+            <div class="result" id="result">
+                <div class="result-icon">✅</div>
+                <div class="result-text">PDF生成成功！</div>
+                <a id="download-link" class="btn btn-success" style="display: inline-block; text-decoration: none; text-align: center;">
+                    📥 下载PDF文件
+                </a>
+            </div>
+            
+            <div class="warning" id="warning">
+                <div class="warning-title">⚠️ 链接抓取失败</div>
+                <div id="warning-text">微信文章有访问限制，建议复制文章内容粘贴生成。</div>
+                <button class="btn btn-secondary" onclick="switchToTextTab()">切换到粘贴文字模式</button>
+            </div>
+            
+            <div class="error" id="error"></div>
+        </div>
+        
+        <div class="card">
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-text">手机直接使用</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🖼️</div>
+                    <div class="feature-text">保留文章图片</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-text">文字可搜索</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedImage = null;
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+            
+            hideResult();
+        }
+        
+        function switchToTextTab() {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('text-tab').classList.add('active');
+            
+            hideResult();
+        }
+        
+        async function pasteContent() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('content').value = text;
+            } catch (err) {
+                showError('无法自动粘贴，请手动粘贴内容');
+            }
+        }
+        
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedImage = file;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                
+                document.querySelector('.upload-area').classList.add('has-file');
+                document.querySelector('.upload-text').textContent = '已选择: ' + file.name;
+            }
+        }
+        
+        function showProgress(text) {
+            document.getElementById('progress').classList.add('active');
+            document.getElementById('progress-text').textContent = text;
+            document.getElementById('submit-btn').disabled = true;
+        }
+        
+        function hideProgress() {
+            document.getElementById('progress').classList.remove('active');
+            document.getElementById('submit-btn').disabled = false;
+        }
+        
+        function showResult(downloadUrl, filename) {
+            const result = document.getElementById('result');
+            const link = document.getElementById('download-link');
+            link.href = downloadUrl;
+            link.download = filename;
+            result.classList.add('active');
+        }
+        
+        function showWarning(title, text) {
+            const warning = document.getElementById('warning');
+            warning.querySelector('.warning-title').textContent = '⚠️ ' + title;
+            document.getElementById('warning-text').textContent = text;
+            warning.classList.add('active');
+        }
+        
+        function hideResult() {
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('error').classList.remove('active');
+            document.getElementById('warning').classList.remove('active');
+        }
+        
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.add('active');
+        }
+        
+        async function generatePDF() {
+            hideResult();
+            
+            const activeTab = document.querySelector('.tab-content.active').id;
+            
+            if (activeTab === 'link-tab') {
+                // 链接模式
+                const link = document.getElementById('article-link').value.trim();
+                
+                if (!link) {
+                    showError('请输入文章链接');
+                    return;
+                }
+                
+                if (!link.includes('mp.weixin.qq.com')) {
+                    showError('请输入正确的微信公众号文章链接');
+                    return;
+                }
+                
+                showProgress('正在抓取文章内容和图片...');
+                
+                try {
+                    const response = await fetch('/api/fetch-from-link', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: link
+                        })
+                    });
+                    
+                    if (response.status === 403) {
+                        hideProgress();
+                        showWarning('链接抓取失败', '微信文章有访问限制，建议复制文章内容粘贴生成。');
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || '抓取失败');
+                    }
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = 'article.pdf';
+                    
+                    hideProgress();
+                    showResult(url, filename);
+                } catch (err) {
+                    hideProgress();
+                    showWarning('链接抓取失败', '微信文章有访问限制，建议复制文章内容粘贴生成。');
+                }
+                
+            } else if (activeTab === 'text-tab') {
+                // 文字模式
+                const content = document.getElementById('content').value.trim();
+                const title = document.getElementById('title').value.trim();
+                
+                if (!content) {
+                    showError('请输入文章内容');
+                    return;
+                }
+                
+                showProgress('正在生成PDF...');
+                
+                try {
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            content: content,
+                            title: title
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('生成失败');
+                    }
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = (title || 'article') + '.pdf';
+                    
+                    hideProgress();
+                    showResult(url, filename);
+                } catch (err) {
+                    hideProgress();
+                    showError('生成PDF失败: ' + err.message);
+                }
+                
+            } else if (activeTab === 'image-tab') {
+                // 图片模式
+                if (!selectedImage) {
+                    showError('请上传截图');
+                    return;
+                }
+                
+                const title = document.getElementById('img-title').value.trim();
+                
+                showProgress('正在识别图片文字...');
+                
+                const formData = new FormData();
+                formData.append('image', selectedImage);
+                formData.append('title', title);
+                
+                try {
+                    const response = await fetch('/api/generate-from-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || '生成失败');
+                    }
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = (title || 'article') + '.pdf';
+                    
+                    hideProgress();
+                    showResult(url, filename);
+                } catch (err) {
+                    hideProgress();
+                    showError('生成PDF失败: ' + err.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
